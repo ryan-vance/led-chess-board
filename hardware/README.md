@@ -4,8 +4,8 @@ This folder contains all hardware specifications, assembly instructions, and com
 
 ## Quick Links
 
-- [Bill of Materials](BOM.md) - Complete parts list with specifications
-- [Wiring Guide](wiring-guide.md) - Pin connections and circuit assembly
+- [Bill of Materials](https://github.com/ryan-vance/led-chess-board/blob/main/hardware/Bom) - Complete parts list with specifications
+- [Wiring Guide](https://github.com/ryan-vance/led-chess-board/blob/main/hardware/Wiring%20Guide) - Pin connections and circuit assembly
 - [Circuit Diagram](https://wokwi.com/projects/428952069470626817) - Interactive Wokwi simulation
 
 ## System Overview
