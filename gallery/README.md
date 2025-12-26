@@ -1,0 +1,7 @@
+![Public Demonstration (First Winning Challenger)](https://github.com/user-attachments/assets/b2f9cda0-cb26-4556-830e-6903277978ee)
+![Multiple Lights Demonstration](https://github.com/user-attachments/assets/f7370e52-a57a-40e8-91bc-5e88e6bf727b)
+![Light Through Piece](https://github.com/user-attachments/assets/276c9a09-3d59-4acf-a4c6-60a5800250b8)
+![Light On Board](https://github.com/user-attachments/assets/d994a277-05d8-4e73-b46d-37666b1240ca)
+![Chess Board Final Picture](https://github.com/user-attachments/assets/00ea255e-7983-44ea-82a8-ce04d6561e1e)
+![Physical Assembly Process](https://github.com/user-attachments/assets/3f3a5985-1ee7-4960-a57e-145fd7e05ef5)
+![Chess Board Circuitry](https://github.com/user-attachments/assets/304976b0-bb12-419b-8975-fda69b65ca63)
