@@ -118,13 +118,15 @@ Arduino Mega (20 pins)
 
 ## Demo
 
-*Note: Add your chess board demo video or photos to an `images/` folder*
+Go to [this](https://wokwi.com/projects/428952069470626817) link to test the simulation yourself. You can even use the controls to play. Use the show command often to remember where your pieces are, and remember that the board is inverted in this state because it had to be wired upside down!
 
-Additional photos and videos can be found [here]().
+To see pictures of our process and journey, check the [gallery](https://github.com/ryan-vance/led-chess-board/tree/main/gallery) folder. All pictures can be seen in the [README](https://github.com/ryan-vance/led-chess-board/blob/main/gallery/README.md).
+
+A video demonstration play is posted on [YouTube](https://youtu.be/uNnXn8bJfGM).
 
 ## Software Architecture
 
-Check out the code comments in [finalChess.ino](finalChess.ino) to see the system implementation.
+Check out the code comments in [finalChess.ino](https://github.com/ryan-vance/led-chess-board/blob/main/src/finalChess.ino) to see the system implementation.
 
 **Key Components:**
 - Chess algorithm based on Micro-Max by H.G. Muller (adapted by Diego Cueva)
