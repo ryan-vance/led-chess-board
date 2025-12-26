@@ -4,7 +4,7 @@ This folder contains detailed technical documentation for the LED Chess Board pr
 
 ## Documentation Index
 
-### [System Architecture](system-architecture.md)
+### [System Architecture](https://github.com/ryan-vance/led-chess-board/blob/main/docs/System%20Architecture)
 High-level overview of how the hardware and software integrate to create the chess board. Start here for a quick understanding of the complete system.
 
 **Topics covered:**
@@ -13,7 +13,7 @@ High-level overview of how the hardware and software integrate to create the che
 - Component interaction
 - Design rationale
 
-### [Multiplexer Implementation](multiplexer-implementation.md)
+### [Multiplexer Implementation](https://github.com/ryan-vance/led-chess-board/blob/main/docs/Multiplexer%20Implementation)
 Deep-dive into the multiplexer control system, including binary channel selection and LED control logic.
 
 **Topics covered:**
@@ -22,7 +22,7 @@ Deep-dive into the multiplexer control system, including binary channel selectio
 - Non-blocking LED blinking implementation
 - Performance optimizations
 
-### [LED Mapping](led-mapping.md)
+### [LED Mapping](https://github.com/ryan-vance/led-chess-board/blob/main/docs/LED%20Mapping)
 Explanation of how chess board squares map to multiplexer channels, including the algorithmic approach to position translation.
 
 **Topics covered:**
@@ -90,16 +90,7 @@ If you're building something similar or learning from this project:
 4. **Review the code** - Located in `/src/finalChess.ino`
 5. **Check the hardware folder** - Physical implementation details
 
-## Related Resources
-
-### In This Repository
-- [Main README](../README.md) - Project overview and features
-- [Source Code](../src/finalChess.ino) - Complete Arduino implementation
-- [Hardware Documentation](../hardware/README.md) - Assembly and wiring
-- [Bill of Materials](../hardware/BOM.md) - Component list
-- [Wiring Guide](../hardware/wiring-guide.md) - Pin connections
-
-### External Resources
+## External Resources
 - [Wokwi Simulation](https://wokwi.com/projects/428952069470626817) - Interactive circuit
 - [Micro-Max Chess Engine](http://home.hccnet.nl/h.g.muller/max-src2.html) - Original algorithm
 - [CD74HC4067 Datasheet](https://www.ti.com/lit/ds/symlink/cd74hc4067.pdf) - Multiplexer specs
