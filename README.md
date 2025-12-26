@@ -44,7 +44,7 @@ The LED chess board successfully met all established project requirements, demon
 
 - **Functionality**: Consistent AI performance with full chess rule implementation including castling, en passant, and pawn promotion
 - **Integration**: Seamless coordination between Arduino Mega, 4 multiplexers, 64 LEDs, and chess algorithm using only 20% of available memory
-- **User Experience**: Intuitive serial interface with clear LED feedback creates engaging gameplay with <5 second move calculation. Longer thinking = hard difficulty
+- **User Experience**: Intuitive serial interface with clear LED feedback creates engaging gameplay with <5 second move calculation. Longer thinking = harder difficulty
 
 ## Hardware Platform
 
