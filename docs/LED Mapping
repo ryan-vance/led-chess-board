@@ -1,0 +1,477 @@
+# LED Mapping System
+
+This document explains how chess board positions in algebraic notation (e.g., "e2", "h7") are translated into hardware addresses (multiplexer number and channel number) for LED control.
+
+## Overview
+
+The LED Chess Board uses a systematic mapping between chess squares and multiplexer channels. Each of the 64 chess squares corresponds to a unique combination of:
+- **Multiplexer (MUX):** Which of the 4 multiplexers (0-3)
+- **Channel:** Which of the 16 channels (0-15) on that multiplexer
+
+## Algebraic Notation Refresher
+
+Chess uses algebraic notation to identify squares:
+- **Files (Columns):** Letters a-h (left to right)
+- **Ranks (Rows):** Numbers 1-8 (bottom to top)
+
+**Examples:**
+- a1 = bottom-left square (white's queenside rook starting position)
+- h8 = top-right square (black's kingside rook starting position)
+- e4 = center square (common pawn opening)
+
+## Board Quadrant System
+
+The 8×8 chess board is divided into four 4×4 quadrants, each controlled by one multiplexer:
+
+```
+    a  b  c  d     e  f  g  h
+  ┌─────────────┬─────────────┐
+8 │   MUX 2    │   MUX 3     │
+7 │ (Quadrant C)│(Quadrant D) │
+6 │    A-D      │    E-H      │
+5 │   Rows 5-8  │  Rows 5-8   │
+  ├─────────────┼─────────────┤
+4 │   MUX 0    │   MUX 1     │
+3 │ (Quadrant A)│(Quadrant B) │
+2 │    A-D      │    E-H      │
+1 │   Rows 1-4  │  Rows 1-4   │
+  └─────────────┴─────────────┘
+```
+
+### Quadrant Definitions
+
+| Quadrant | MUX | Files | Ranks | Squares |
+|----------|-----|-------|-------|---------|
+| A | 0 | a-d | 1-4 | a1-d4 |
+| B | 1 | e-h | 1-4 | e1-h4 |
+| C | 2 | a-d | 5-8 | a5-d8 |
+| D | 3 | e-h | 5-8 | e5-h8 |
+
+## Mapping Algorithm
+
+### High-Level Logic
+
+```
+1. Determine MUX number:
+   - Files a-d → MUX 0 or 2
+   - Files e-h → MUX 1 or 3
+   - Rows 1-4 → MUX 0 or 1
+   - Rows 5-8 → MUX 2 or 3
+
+2. Determine channel number:
+   - Based on position within the 4×4 quadrant
+   - Each file has 4 channels (0-3 or 4-7 or 8-11 or 12-15)
+   - Row determines offset within file's channel group
+```
+
+### Code Implementation
+
+```cpp
+struct MuxChannel {
+  byte mux;     // Which multiplexer (0-3)
+  byte channel; // Which channel (0-15)
+};
+
+MuxChannel getChannelFromPosition(char col, char row) {
+  MuxChannel result;
+  
+  switch(col) {
+    case 'a':
+      result.mux = (row > '4') ? 2 : 0;
+      result.channel = (row > '4') ? 12 + (row - '5') : 3 - (row - '1');
+      break;
+    case 'b':
+      result.mux = (row > '4') ? 2 : 0;
+      result.channel = (row > '4') ? 8 + (row - '5') : 7 - (row - '1');
+      break;
+    case 'c':
+      result.mux = (row > '4') ? 2 : 0;
+      result.channel = (row > '4') ? 4 + (row - '5') : 11 - (row - '1');
+      break;
+    case 'd':
+      result.mux = (row > '4') ? 2 : 0;
+      result.channel = (row > '4') ? (row - '5') : 15 - (row - '1');
+      break;
+    case 'e':
+      result.mux = (row > '4') ? 3 : 1;
+      result.channel = (row > '4') ? 12 + (row - '5') : 3 - (row - '1');
+      break;
+    case 'f':
+      result.mux = (row > '4') ? 3 : 1;
+      result.channel = (row > '4') ? 8 + (row - '5') : 7 - (row - '1');
+      break;
+    case 'g':
+      result.mux = (row > '4') ? 3 : 1;
+      result.channel = (row > '4') ? 4 + (row - '5') : 11 - (row - '1');
+      break;
+    case 'h':
+      result.mux = (row > '4') ? 3 : 1;
+      result.channel = (row > '4') ? (row - '5') : 15 - (row - '1');
+      break;
+  }
+  
+  return result;
+}
+```
+
+## Complete Mapping Tables
+
+### MUX 0: Quadrant A (a1-d4)
+
+| Square | File | Rank | MUX | Channel | Binary |
+|--------|------|------|-----|---------|--------|
+| **File A** |
+| a1 | a | 1 | 0 | 3 | 0011 |
+| a2 | a | 2 | 0 | 2 | 0010 |
+| a3 | a | 3 | 0 | 1 | 0001 |
+| a4 | a | 4 | 0 | 0 | 0000 |
+| **File B** |
+| b1 | b | 1 | 0 | 7 | 0111 |
+| b2 | b | 2 | 0 | 6 | 0110 |
+| b3 | b | 3 | 0 | 5 | 0101 |
+| b4 | b | 4 | 0 | 4 | 0100 |
+| **File C** |
+| c1 | c | 1 | 0 | 11 | 1011 |
+| c2 | c | 2 | 0 | 10 | 1010 |
+| c3 | c | 3 | 0 | 9 | 1001 |
+| c4 | c | 4 | 0 | 8 | 1000 |
+| **File D** |
+| d1 | d | 1 | 0 | 15 | 1111 |
+| d2 | d | 2 | 0 | 14 | 1110 |
+| d3 | d | 3 | 0 | 13 | 1101 |
+| d4 | d | 4 | 0 | 12 | 1100 |
+
+**Pattern:** Within MUX 0, channels are assigned in groups of 4 per file:
+- File a: Channels 0-3 (descending with rank)
+- File b: Channels 4-7 (descending with rank)
+- File c: Channels 8-11 (descending with rank)
+- File d: Channels 12-15 (descending with rank)
+
+### MUX 1: Quadrant B (e1-h4)
+
+| Square | File | Rank | MUX | Channel | Binary |
+|--------|------|------|-----|---------|--------|
+| **File E** |
+| e1 | e | 1 | 1 | 3 | 0011 |
+| e2 | e | 2 | 1 | 2 | 0010 |
+| e3 | e | 3 | 1 | 1 | 0001 |
+| e4 | e | 4 | 1 | 0 | 0000 |
+| **File F** |
+| f1 | f | 1 | 1 | 7 | 0111 |
+| f2 | f | 2 | 1 | 6 | 0110 |
+| f3 | f | 3 | 1 | 5 | 0101 |
+| f4 | f | 4 | 1 | 4 | 0100 |
+| **File G** |
+| g1 | g | 1 | 1 | 11 | 1011 |
+| g2 | g | 2 | 1 | 10 | 1010 |
+| g3 | g | 3 | 1 | 9 | 1001 |
+| g4 | g | 4 | 1 | 8 | 1000 |
+| **File H** |
+| h1 | h | 1 | 1 | 15 | 1111 |
+| h2 | h | 2 | 1 | 14 | 1110 |
+| h3 | h | 3 | 1 | 13 | 1101 |
+| h4 | h | 4 | 1 | 12 | 1100 |
+
+**Pattern:** Identical to MUX 0, but for files e-h
+
+### MUX 2: Quadrant C (a5-d8)
+
+| Square | File | Rank | MUX | Channel | Binary |
+|--------|------|------|-----|---------|--------|
+| **File A** |
+| a5 | a | 5 | 2 | 12 | 1100 |
+| a6 | a | 6 | 2 | 13 | 1101 |
+| a7 | a | 7 | 2 | 14 | 1110 |
+| a8 | a | 8 | 2 | 15 | 1111 |
+| **File B** |
+| b5 | b | 5 | 2 | 8 | 1000 |
+| b6 | b | 6 | 2 | 9 | 1001 |
+| b7 | b | 7 | 2 | 10 | 1010 |
+| b8 | b | 8 | 2 | 11 | 1011 |
+| **File C** |
+| c5 | c | 5 | 2 | 4 | 0100 |
+| c6 | c | 6 | 2 | 5 | 0101 |
+| c7 | c | 7 | 2 | 6 | 0110 |
+| c8 | c | 8 | 2 | 7 | 0111 |
+| **File D** |
+| d5 | d | 5 | 2 | 0 | 0000 |
+| d6 | d | 6 | 2 | 1 | 0001 |
+| d7 | d | 7 | 2 | 2 | 0010 |
+| d8 | d | 8 | 2 | 3 | 0011 |
+
+**Pattern:** Within MUX 2, channels are assigned in groups of 4 per file:
+- File a: Channels 12-15 (ascending with rank)
+- File b: Channels 8-11 (ascending with rank)
+- File c: Channels 4-7 (ascending with rank)
+- File d: Channels 0-3 (ascending with rank)
+
+### MUX 3: Quadrant D (e5-h8)
+
+| Square | File | Rank | MUX | Channel | Binary |
+|--------|------|------|-----|---------|--------|
+| **File E** |
+| e5 | e | 5 | 3 | 12 | 1100 |
+| e6 | e | 6 | 3 | 13 | 1101 |
+| e7 | e | 7 | 3 | 14 | 1110 |
+| e8 | e | 8 | 3 | 15 | 1111 |
+| **File F** |
+| f5 | f | 5 | 3 | 8 | 1000 |
+| f6 | f | 6 | 3 | 9 | 1001 |
+| f7 | f | 7 | 3 | 10 | 1010 |
+| f8 | f | 8 | 3 | 11 | 1011 |
+| **File G** |
+| g5 | g | 5 | 3 | 4 | 0100 |
+| g6 | g | 6 | 3 | 5 | 0101 |
+| g7 | g | 7 | 3 | 6 | 0110 |
+| g8 | g | 8 | 3 | 7 | 0111 |
+| **File H** |
+| h5 | h | 5 | 3 | 0 | 0000 |
+| h6 | h | 6 | 3 | 1 | 0001 |
+| h7 | h | 7 | 3 | 2 | 0010 |
+| h8 | h | 8 | 3 | 3 | 0011 |
+
+**Pattern:** Identical to MUX 2, but for files e-h
+
+## Mapping Patterns & Logic
+
+### File-Based Grouping
+
+Channels are grouped by file (column), with 4 channels per file:
+
+**MUX 0 & 1 (Rows 1-4):**
+```
+File a/e → Channels 0-3   (bits: 00xx)
+File b/f → Channels 4-7   (bits: 01xx)
+File c/g → Channels 8-11  (bits: 10xx)
+File d/h → Channels 12-15 (bits: 11xx)
+```
+
+**MUX 2 & 3 (Rows 5-8):**
+```
+File d/h → Channels 0-3   (bits: 00xx) [reversed order]
+File c/g → Channels 4-7   (bits: 01xx)
+File b/f → Channels 8-11  (bits: 10xx)
+File a/e → Channels 12-15 (bits: 11xx)
+```
+
+### Rank-Based Offset
+
+Within each file's channel group, the rank determines the offset:
+
+**Rows 1-4 (Descending):**
+- Rank 1 → Highest channel in group (+3)
+- Rank 2 → (+2)
+- Rank 3 → (+1)
+- Rank 4 → Lowest channel in group (+0)
+
+**Rows 5-8 (Ascending):**
+- Rank 5 → Lowest channel in group (+0)
+- Rank 6 → (+1)
+- Rank 7 → (+2)
+- Rank 8 → Highest channel in group (+3)
+
+### Mathematical Formulation
+
+**For files a-d:**
+```
+MUX = (row > 4) ? 2 : 0
+
+For rows 1-4:
+  channel_base = file_offset * 4  // a=0, b=4, c=8, d=12
+  channel = channel_base + (4 - row)
+
+For rows 5-8:
+  channel_base = (3 - file_offset) * 4  // Reversed: d=0, c=4, b=8, a=12
+  channel = channel_base + (row - 5)
+```
+
+**For files e-h:**
+```
+MUX = (row > 4) ? 3 : 1
+// Same channel calculation as files a-d
+```
+
+## Usage Examples
+
+### Example 1: Common Opening Move (e2-e4)
+
+**Source: e2**
+```
+File: e → MUX 1 or 3
+Rank: 2 → Rows 1-4, so MUX 1
+Channel: File e → group 0-3, Rank 2 → offset 2
+Result: MUX 1, Channel 2 (binary 0010)
+```
+
+**Destination: e4**
+```
+File: e → MUX 1 or 3
+Rank: 4 → Rows 1-4, so MUX 1
+Channel: File e → group 0-3, Rank 4 → offset 0
+Result: MUX 1, Channel 0 (binary 0000)
+```
+
+**LED Control:**
+```cpp
+// Blink e2 and e4 to show move
+MuxChannel src = getChannelFromPosition('e', '2'); // {1, 2}
+MuxChannel dst = getChannelFromPosition('e', '4'); // {1, 0}
+```
+
+### Example 2: Knight Move (g1-f3)
+
+**Source: g1**
+```
+File: g → MUX 1
+Rank: 1 → Channel 11 (binary 1011)
+Result: MUX 1, Channel 11
+```
+
+**Destination: f3**
+```
+File: f → MUX 1
+Rank: 3 → Channel 5 (binary 0101)
+Result: MUX 1, Channel 5
+```
+
+### Example 3: Queenside Castling (e1-c1, a1-d1)
+
+This move involves two pieces, but only king's movement is shown:
+
+**King: e1 → c1**
+```
+e1: MUX 1, Channel 3
+c1: MUX 0, Channel 11
+```
+
+Note: Different multiplexers, so both can light simultaneously if desired.
+
+## Move Visualization System
+
+### Setting Up a Move Display
+
+```cpp
+void setChessMove(const char* move) {
+  // Extract source and destination
+  char srcCol = move[0];
+  char srcRow = move[1];
+  char dstCol = move[2];
+  char dstRow = move[3];
+  
+  // Get MUX and channel for each
+  srcChannel = getChannelFromPosition(srcCol, srcRow);
+  dstChannel = getChannelFromPosition(dstCol, dstRow);
+  
+  // Activate blinking
+  blinkingActive = true;
+  lastBlinkTime = millis();
+  blinkState = true;
+}
+```
+
+### LED Blinking During Gameplay
+
+When the computer makes a move, both source and destination squares blink:
+
+```
+Computer moves Knight: g8 to f6
+  ↓
+getChannelFromPosition('g', '8') → MUX 3, Ch 6
+getChannelFromPosition('f', '6') → MUX 3, Ch 9
+  ↓
+Blink both LEDs at 500ms interval
+```
+
+## Design Rationale
+
+### Why This Mapping?
+
+1. **Hardware Simplicity:** Physical wiring follows quadrant layout
+2. **Logical Grouping:** Files kept together for intuitive debugging
+3. **Efficient Lookup:** Simple switch statement, no complex calculations
+4. **Maintainability:** Clear pattern makes verification easy
+
+### Alternative Approaches Considered
+
+**Sequential Mapping (Not Used):**
+```
+a1→Ch0, a2→Ch1, a3→Ch2, ...
+```
+- Simpler math
+- BUT: Requires more complex wiring
+- Physical layout wouldn't match logical layout
+
+**Row-Major Order (Not Used):**
+```
+a1→Ch0, b1→Ch1, c1→Ch2, d1→Ch3, e1→Ch4, ...
+```
+- Follows reading order
+- BUT: Splits files across multiplexers
+- Harder to wire and debug
+
+## Debugging Tools
+
+### Visual Mapping Test
+
+```cpp
+void testMapping() {
+  char files[] = "abcdefgh";
+  for (int f = 0; f < 8; f++) {
+    for (int r = 1; r <= 8; r++) {
+      MuxChannel mc = getChannelFromPosition(files[f], '0' + r);
+      Serial.print(files[f]);
+      Serial.print(r);
+      Serial.print(" → MUX ");
+      Serial.print(mc.mux);
+      Serial.print(", CH ");
+      Serial.println(mc.channel);
+      
+      // Light LED briefly
+      turnOnLED(mc.mux, mc.channel);
+      delay(100);
+      turnOffLED(mc.mux, mc.channel);
+    }
+  }
+}
+```
+
+### Reverse Lookup (For Verification)
+
+```cpp
+String getPositionFromChannel(byte mux, byte channel) {
+  // Reverse lookup for debugging
+  // Implementation would reverse the mapping logic
+}
+```
+
+## Performance Considerations
+
+### Lookup Speed
+
+- Switch statement: O(1) average case
+- No floating-point math required
+- Suitable for real-time LED updates during gameplay
+
+### Memory Usage
+
+- No lookup table needed (saves ~128 bytes)
+- Function uses only local variables
+- Efficient stack usage
+
+## Conclusion
+
+The LED mapping system provides a clean abstraction between chess logic (algebraic notation) and hardware control (MUX/channel addressing). The quadrant-based approach balances:
+
+- **Simplicity:** Clear patterns easy to understand and verify
+- **Efficiency:** Fast lookup without large data structures
+- **Maintainability:** Logical groupings aid debugging
+- **Physical Layout:** Matches actual hardware organization
+
+This design allows the chess algorithm to think in terms of chess positions while the hardware control layer seamlessly translates to electrical signals.
+
+## See Also
+
+- [System Architecture](system-architecture.md) - Overall integration
+- [Multiplexer Implementation](multiplexer-implementation.md) - Control logic details
+- [Wiring Guide](../hardware/wiring-guide.md) - Physical channel connections
+- [Source Code](../src/finalChess.ino) - Complete implementation
