@@ -1,0 +1,245 @@
+# Bill of Materials (BOM)
+
+Complete parts list for the LED Chess Board project with specifications, quantities, and sourcing information.
+
+**Total Project Cost:** ~$75
+
+## Core Electronics
+
+| Component | Part Number/Model | Quantity | Unit Cost | Purpose |
+|-----------|------------------|----------|-----------|---------|
+| Arduino Mega 2560 | ELEGOO | 1 | ~$15 | Main microcontroller |
+| CD74HC4067 Multiplexer | 16-channel | 4 | ~$1 each | I/O expansion for LED control |
+| 1kΩ Resistor (¼W) | - | 4 | <$0.10 each | Current limiting for LED protection |
+| Pre-wired SMD Micro LEDs | Various colors | 75 (3×25pcs) | ~$8 per 25 | Square indicators |
+
+### Component Details
+
+#### Arduino Mega 2560 (ELEGOO)
+
+**Specifications:**
+- Microcontroller: ATmega2560
+- Operating Voltage: 5V
+- Digital I/O Pins: 54 (15 provide PWM output)
+- Analog Input Pins: 16
+- Flash Memory: 256 KB
+- SRAM: 8 KB
+- Clock Speed: 16 MHz
+
+**Why This Board:**
+- Sufficient I/O pins (54 vs. Uno's 14) for multiplexer control
+- Adequate memory (256 KB) for chess algorithm implementation
+- Stable 3.3V output for LED power
+- USB interface for programming and serial communication
+
+#### CD74HC4067 Multiplexers
+
+**Specifications:**
+- Channels: 16 (individually selectable)
+- Control Inputs: 4-bit binary (S0-S3)
+- Operating Voltage: 2V to 6V
+- Enable Pin: Active LOW
+- Switching Speed: High-speed CMOS
+- Package: DIP or breakout board
+
+**Functionality:**
+- Reduces 16 I/O lines to 5 pins (4 control + 1 signal)
+- Bidirectional operation (can read or write)
+- Low ON-state resistance
+- High OFF-state isolation
+
+**Why 4 Multiplexers:**
+- 64 squares ÷ 16 channels = 4 multiplexers needed
+- Each MUX controls one 4×4 quadrant of the board
+
+#### 1kΩ Resistors
+
+**Specifications:**
+- Resistance: 1000Ω (±5% tolerance)
+- Power Rating: ¼W
+- Type: Carbon film or metal film
+
+**Purpose:**
+- Current limiting for LED protection
+- One resistor per multiplexer signal pin
+- Prevents excessive current draw from Arduino
+
+**Current Calculation:**
+```
+I = V / R = 3.3V / 1000Ω = 3.3mA per LED
+Safe operating range for typical LEDs: 2-20mA
+```
+
+#### Pre-wired SMD Micro LEDs
+
+**Specifications:**
+- Size: SMD micro (compact for under-tile mounting)
+- Colors: Red, Yellow, Green (25 each)
+- Pre-soldered leads: Simplifies installation
+- Forward Voltage: ~2-3V
+- Forward Current: ~20mA (max)
+
+**Design Choice:**
+- Pre-wired construction saves soldering time
+- Small size fits beneath chess tiles
+- Multiple colors available for move indication (optional)
+
+## Structural Components
+
+| Component | Material | Quantity | Purpose |
+|-----------|----------|----------|---------|
+| Prototyping Boards | FR4 PCB | 4 | Circuit organization and MUX mounting |
+| Chess Tiles | 3D Printed PLA | 32 Light / 32 Dark | Playing surface with LED holes |
+| Chess Board Base | Laser Cut Acrylic | 1 box | Housing for circuitry |
+| Chess Pieces | Clear Plastic | 1 set (32 pieces) | Physical game interface |
+
+### Structural Details
+
+#### Prototyping Boards
+
+**Specifications:**
+- Type: Perforated PCB breadboard
+- Size: Sufficient for 2 multiplexers each
+- Hole Spacing: Standard 0.1" (2.54mm)
+- Material: FR4 fiberglass
+
+**Features:**
+- Through-hole connections
+- Solderable pads
+- Easy wire routing and bridging
+
+**Layout:**
+- 2 multiplexers per board
+- Component spacing for 1kΩ resistor mounting
+- Wire routing channels
+
+#### 3D Printed Chess Tiles
+
+**Design Features:**
+- Center hole for LED mounting
+- Standard chess square size (~2" per side, adjustable)
+- Alternating light/dark colors for board pattern
+- Slightly raised edges for piece positioning
+
+**Material:**
+- PLA filament (recommended)
+- Light colors: White, cream, or tan
+- Dark colors: Black, brown, or gray
+
+#### Acrylic Base
+
+**Purpose:**
+- Contains and protects circuitry
+- Provides rigid mounting surface
+- Elevates playing surface above electronics
+
+**Design:**
+- Box construction with open top
+- Access panel for Arduino USB connection
+- Cable routing holes
+- Sufficient depth for prototyping boards and wiring
+
+## Wiring and Connectors
+
+| Component | Specification | Quantity | Purpose |
+|-----------|--------------|----------|---------|
+| Hookup Wire | 22 AWG solid/stranded | ~50 feet | Connections |
+| Heat Shrink Tubing | Various sizes | 3-4 feet | Insulation |
+| Solder | 60/40 tin-lead or lead-free | 1 spool | Permanent connections |
+
+### Wiring Recommendations
+
+**Wire Colors (Suggested):**
+- Red: +3.3V / Signal pins
+- Black: Ground
+- Blue: Control signals (S0-S3)
+- Green: Enable pins
+- Other colors: LED connections
+
+**Wire Gauge:**
+- 22 AWG: Good balance of flexibility and current capacity
+- Solid core: Easier for prototyping board connections
+- Stranded: Better for Arduino pin headers
+
+## Tools Required (Not Included)
+
+- Soldering iron (temperature controlled recommended)
+- Solder wick or desoldering pump
+- Wire strippers
+- Diagonal cutters
+- Needle-nose pliers
+- Multimeter (for continuity testing)
+- Heat gun or lighter (for heat shrink)
+- Third hand or PCB holder
+
+## Optional Components
+
+| Component | Purpose | Cost |
+|-----------|---------|------|
+| LED holders/clips | More secure LED mounting | ~$5 |
+| Cable management clips | Neater wire routing | ~$3 |
+| Rubber feet | Anti-slip base padding | ~$2 |
+| Power supply | External power if USB insufficient | ~$10 |
+
+## Sourcing Recommendations
+
+**Electronics:**
+- Amazon, DigiKey, Mouser for components
+- ELEGOO official store for Arduino
+- SparkFun or Adafruit for multiplexer breakouts
+
+**Structural:**
+- Local makerspace for 3D printing and laser cutting
+- Hardware store for acrylic sheets (if cutting yourself)
+- Online chess retailers for pieces
+
+## Assembly Cost Breakdown
+
+| Category | Approximate Cost |
+|----------|-----------------|
+| Electronics | $30-35 |
+| Structural Components | $25-30 |
+| Wiring/Connectors | $10-15 |
+| Miscellaneous | $5-10 |
+| **Total** | **~$75** |
+
+*Costs are approximate and may vary by supplier and location. Assumes access to tools for fabrication.*
+
+## Component Substitutions
+
+**Acceptable Alternatives:**
+
+- **Arduino:** Any compatible board with 20+ I/O pins (Mega, Due, etc.)
+- **Multiplexers:** 74HC4067 (non-CD variant) works identically
+- **Resistors:** 820Ω to 1.5kΩ range acceptable (adjust for LED specs)
+- **LEDs:** Any small LEDs with appropriate voltage/current ratings
+
+**Not Recommended:**
+
+- Arduino Uno (insufficient pins even with multiplexers)
+- Higher resistance values (>2kΩ) may produce dim LEDs
+- Non-pre-wired LEDs (significantly increases assembly time)
+
+## Inventory Checklist
+
+Use this checklist when gathering components:
+
+- [ ] Arduino Mega 2560
+- [ ] 4× CD74HC4067 multiplexers
+- [ ] 4× 1kΩ resistors
+- [ ] 75× pre-wired LEDs (or more for spares)
+- [ ] 4× prototyping boards
+- [ ] 64× 3D printed tiles (32 light, 32 dark)
+- [ ] 1× acrylic base
+- [ ] 32× chess pieces (1 complete set)
+- [ ] Hookup wire assortment
+- [ ] Heat shrink tubing
+- [ ] Solder
+- [ ] Access to required tools
+
+## Notes
+
+- Order extra LEDs (recommend 80+) to account for potential failures
+- Keep all receipts for project documentation
+- Check component compatibility before purchasing
+- Consider prototyping one quadrant before full assembly
