@@ -112,7 +112,7 @@ Arduino Mega (20 pins)
 
 ### Commands
 - `show` - Display the current board state
-- `move e2e4` - Move a piece from e2 to e4
+- `move e2e4` or `e2e4` - Move a piece from e2 to e4
 - `reset` - Reset the board to starting position
 - `stop` - Stop LED blinking
 
