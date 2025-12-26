@@ -1,0 +1,485 @@
+# Multiplexer Implementation
+
+This document provides a detailed technical explanation of how the CD74HC4067 multiplexers are used to control 64 LEDs with only 20 Arduino pins, including the binary encoding system and control logic.
+
+## Problem Statement
+
+**Challenge:** Control 64 individual LEDs (one per chess square) using an Arduino Mega 2560.
+
+**Constraint:** Arduino Mega has 54 digital I/O pins, but 64 are needed for direct LED control.
+
+**Solution:** Use 4× CD74HC4067 16-channel multiplexers to expand 20 pins to 64 channels.
+
+## Multiplexer Fundamentals
+
+### What is a Multiplexer?
+
+A multiplexer (MUX) is a digital switch that can connect one of many inputs to a single output (or vice versa for de-multiplexing). Think of it as a rotary switch controlled by binary signals.
+
+```
+           MUX (16-channel)
+              ┌─────┐
+    S0 ──────►│     │
+    S1 ──────►│ SEL │
+    S2 ──────►│     │
+    S3 ──────►│     │──► Channel 0-15 (selected by S0-S3)
+              │     │
+   SIG ──────►│     │
+    EN ──────►│     │
+              └─────┘
+```
+
+### CD74HC4067 Specifications
+
+- **Channels:** 16 (numbered 0-15)
+- **Control Inputs:** 4-bit binary (S0, S1, S2, S3)
+- **Signal Pin:** Bidirectional (can read or write)
+- **Enable Pin:** Active LOW (must be LOW for operation)
+- **Voltage:** 2V to 6V operating range
+- **Speed:** High-speed CMOS switching
+
+## Binary Channel Selection
+
+### 4-Bit Binary Encoding
+
+The multiplexer uses a 4-bit binary number to select one of 16 channels. Each control pin (S0-S3) represents one bit:
+
+- **S0:** Least Significant Bit (LSB) = 2^0 = 1
+- **S1:** Bit 1 = 2^1 = 2
+- **S2:** Bit 2 = 2^2 = 4
+- **S3:** Most Significant Bit (MSB) = 2^3 = 8
+
+**Formula:** Channel = S0×1 + S1×2 + S2×4 + S3×8
+
+### Complete Channel Table
+
+| Channel | S3 | S2 | S1 | S0 | Binary | Decimal | Calculation |
+|---------|----|----|----|----|--------|---------|-------------|
+| 0 | 0 | 0 | 0 | 0 | 0000 | 0 | 0+0+0+0 |
+| 1 | 0 | 0 | 0 | 1 | 0001 | 1 | 1+0+0+0 |
+| 2 | 0 | 0 | 1 | 0 | 0010 | 2 | 0+2+0+0 |
+| 3 | 0 | 0 | 1 | 1 | 0011 | 3 | 1+2+0+0 |
+| 4 | 0 | 1 | 0 | 0 | 0100 | 4 | 0+0+4+0 |
+| 5 | 0 | 1 | 0 | 1 | 0101 | 5 | 1+0+4+0 |
+| 6 | 0 | 1 | 1 | 0 | 0110 | 6 | 0+2+4+0 |
+| 7 | 0 | 1 | 1 | 1 | 0111 | 7 | 1+2+4+0 |
+| 8 | 1 | 0 | 0 | 0 | 1000 | 8 | 0+0+0+8 |
+| 9 | 1 | 0 | 0 | 1 | 1001 | 9 | 1+0+0+8 |
+| 10 | 1 | 0 | 1 | 0 | 1010 | 10 | 0+2+0+8 |
+| 11 | 1 | 0 | 1 | 1 | 1011 | 11 | 1+2+0+8 |
+| 12 | 1 | 1 | 0 | 0 | 1100 | 12 | 0+0+4+8 |
+| 13 | 1 | 1 | 0 | 1 | 1101 | 13 | 1+0+4+8 |
+| 14 | 1 | 1 | 1 | 0 | 1110 | 14 | 0+2+4+8 |
+| 15 | 1 | 1 | 1 | 1 | 1111 | 15 | 1+2+4+8 |
+
+## System Architecture
+
+### 4-Multiplexer Configuration
+
+The chess board is divided into four 4×4 quadrants, each controlled by one multiplexer:
+
+```
+    A  B  C  D    E  F  G  H
+  ┌──────────┬──────────┐
+8 │  MUX 2  │  MUX 3   │
+7 │ (A5-D8) │ (E5-H8)  │
+6 │         │          │
+5 │         │          │
+  ├──────────┼──────────┤
+4 │  MUX 0  │  MUX 1   │
+3 │ (A1-D4) │ (E1-H4)  │
+2 │         │          │
+1 │         │          │
+  └──────────┴──────────┘
+```
+
+**Quadrant Assignment:**
+- **MUX 0:** Columns A-D, Rows 1-4 (16 squares)
+- **MUX 1:** Columns E-H, Rows 1-4 (16 squares)
+- **MUX 2:** Columns A-D, Rows 5-8 (16 squares)
+- **MUX 3:** Columns E-H, Rows 5-8 (16 squares)
+
+### Pin Assignment Per Multiplexer
+
+Each multiplexer requires 6 Arduino pins:
+
+```cpp
+const int MUX_PINS[][6] = {
+  {53, 51, 49, 47, 52, 44}, // MUX 0: S0, S1, S2, S3, SIG, EN
+  {29, 27, 25, 23, 46, 38}, // MUX 1
+  {45, 43, 41, 39, 50, 42}, // MUX 2
+  {37, 35, 33, 31, 48, 40}  // MUX 3
+};
+```
+
+**Pin Functions:**
+- **Index 0-3:** Control pins S0-S3 (channel selection)
+- **Index 4:** Signal pin (LED on/off)
+- **Index 5:** Enable pin (MUX activation)
+
+## Control Logic Implementation
+
+### Setting a Multiplexer Channel
+
+The core function `setMuxChannel()` selects a specific channel on a specific multiplexer:
+
+```cpp
+void setMuxChannel(byte mux, byte channel) {
+  // Step 1: Disable all multiplexers
+  for (int i = 0; i < 4; i++) {
+    digitalWrite(MUX_PINS[i][5], HIGH); // EN pin HIGH = disabled
+  }
+  
+  // Step 2: Set channel selection pins using bit shifting
+  for (int i = 0; i < 4; i++) {
+    digitalWrite(MUX_PINS[mux][i], (channel >> i) & 0x01);
+  }
+  
+  // Step 3: Enable only the target multiplexer
+  digitalWrite(MUX_PINS[mux][5], LOW); // EN pin LOW = enabled
+}
+```
+
+### Bit Manipulation Explained
+
+The line `(channel >> i) & 0x01` extracts individual bits from the channel number:
+
+**Example: Channel 11 (binary 1011)**
+
+```
+i=0: (1011 >> 0) & 0001 = 1011 & 0001 = 0001 → S0 = 1
+i=1: (1011 >> 1) & 0001 = 0101 & 0001 = 0001 → S1 = 1
+i=2: (1011 >> 2) & 0001 = 0010 & 0001 = 0000 → S2 = 0
+i=3: (1011 >> 3) & 0001 = 0001 & 0001 = 0001 → S3 = 1
+```
+
+**Result:** Binary 1011 → Sets S3=1, S2=0, S1=1, S0=1 → Channel 11
+
+### Turning LEDs On and Off
+
+```cpp
+void turnOnLED(byte mux, byte channel) {
+  setMuxChannel(mux, channel);  // Select the channel
+  digitalWrite(MUX_PINS[mux][4], HIGH);  // Set signal HIGH
+}
+
+void turnOffLED(byte mux, byte channel) {
+  setMuxChannel(mux, channel);  // Select the channel
+  digitalWrite(MUX_PINS[mux][4], LOW);   // Set signal LOW
+}
+```
+
+### Complete Sequence Example
+
+**Goal:** Light the LED at chess square G6
+
+**Step 1:** Determine MUX and channel
+- G6 is in columns E-H, rows 5-8 → MUX 3
+- G6 maps to Channel 5 (see LED mapping documentation)
+
+**Step 2:** Convert channel to binary
+- Channel 5 = 0101 binary
+- S0=1, S1=0, S2=1, S3=0
+
+**Step 3:** Execute control sequence
+
+```cpp
+// Disable all MUXs
+digitalWrite(MUX_PINS[0][5], HIGH);
+digitalWrite(MUX_PINS[1][5], HIGH);
+digitalWrite(MUX_PINS[2][5], HIGH);
+digitalWrite(MUX_PINS[3][5], HIGH);
+
+// Set channel selection for MUX 3
+digitalWrite(MUX_PINS[3][0], HIGH);  // S0 = 1
+digitalWrite(MUX_PINS[3][1], LOW);   // S1 = 0
+digitalWrite(MUX_PINS[3][2], HIGH);  // S2 = 1
+digitalWrite(MUX_PINS[3][3], LOW);   // S3 = 0
+
+// Enable MUX 3
+digitalWrite(MUX_PINS[3][5], LOW);
+
+// Turn on LED
+digitalWrite(MUX_PINS[3][4], HIGH);
+```
+
+## Non-Blocking LED Blink System
+
+### The Problem with delay()
+
+Traditional LED blinking uses `delay()`:
+
+```cpp
+// BAD: Blocks entire program
+void blinkLED() {
+  digitalWrite(LED, HIGH);
+  delay(500);  // ← Program frozen for 500ms
+  digitalWrite(LED, LOW);
+  delay(500);  // ← Program frozen for 500ms
+}
+```
+
+**Issues:**
+- Chess calculation stops
+- Serial input ignored
+- System appears unresponsive
+
+### Time-Based State Machine
+
+Our solution uses `millis()` for non-blocking timing:
+
+```cpp
+// Global variables
+boolean blinkingActive = false;
+unsigned long lastBlinkTime = 0;
+bool blinkState = true;
+const unsigned long BLINK_INTERVAL = 500;
+
+void updateBlink() {
+  // Early exit if not blinking
+  if (!blinkingActive) return;
+  
+  // Check if enough time has passed
+  unsigned long currentTime = millis();
+  if (currentTime - lastBlinkTime >= BLINK_INTERVAL) {
+    // Update timing
+    lastBlinkTime = currentTime;
+    
+    // Toggle state
+    blinkState = !blinkState;
+    
+    // Update LEDs based on state
+    if (blinkState) {
+      turnOnLED(srcChannel.mux, srcChannel.channel);
+      turnOnLED(dstChannel.mux, dstChannel.channel);
+    } else {
+      turnOffLED(srcChannel.mux, srcChannel.channel);
+      turnOffLED(dstChannel.mux, dstChannel.channel);
+    }
+  }
+}
+```
+
+**How it Works:**
+1. `millis()` returns milliseconds since Arduino startup
+2. Calculate time elapsed: `currentTime - lastBlinkTime`
+3. If elapsed ≥ interval, toggle LED state and update timing
+4. Function returns immediately if not time to update
+
+**Benefits:**
+- Called every loop iteration (~μs overhead)
+- Only updates LEDs when interval reached
+- Other code runs freely between blink updates
+
+### Integration with Main Loop
+
+```cpp
+void loop() {
+  // Update LEDs if needed (non-blocking)
+  updateBlink();
+  
+  // Process serial input
+  if (Serial.available() > 0) {
+    // Handle commands
+  }
+  
+  // Other tasks continue without interruption
+}
+```
+
+## Performance Analysis
+
+### Timing Characteristics
+
+**Channel Selection Time:**
+- 4 digitalWrite() calls for channel bits: ~4μs
+- Enable MUX: ~1μs
+- **Total:** <5μs to select a channel
+
+**LED Update Time:**
+- Channel selection: ~5μs
+- Signal pin update: ~1μs
+- **Total:** <6μs to change LED state
+
+**Blink Update Overhead:**
+- Condition check: <1μs
+- Time comparison: <1μs
+- **Per loop:** <2μs when not updating
+
+### Memory Footprint
+
+**Static Memory:**
+```cpp
+const int MUX_PINS[4][6] = {...};  // 4×6×2 bytes = 48 bytes
+```
+
+**Dynamic Memory:**
+```cpp
+boolean blinkingActive;             // 1 byte
+unsigned long lastBlinkTime;        // 4 bytes
+bool blinkState;                    // 1 byte
+MuxChannel srcChannel;              // 2 bytes
+MuxChannel dstChannel;              // 2 bytes
+```
+
+**Total:** ~58 bytes (0.7% of 8KB SRAM)
+
+### Power Consumption
+
+**Per Multiplexer:**
+- Quiescent current: <1μA
+- Active current: ~500μA per enabled MUX
+- **Total (4 MUX):** <2mA
+
+**Per LED:**
+- Forward current: ~3.3mA (limited by 1kΩ resistor)
+- **Maximum (2 LEDs blinking):** ~6.6mA
+- **Worst case (all 4 corners):** ~13.2mA
+
+**System Total:** <20mA (well within USB 500mA limit)
+
+## Optimization Techniques
+
+### 1. Single Multiplexer Active
+
+Only one MUX is enabled at any time, reducing:
+- Power consumption (no unnecessary current draw)
+- Signal interference (no crosstalk between MUXs)
+- Control complexity (clear state management)
+
+**Implementation:**
+```cpp
+// Always disable all before enabling target
+for (int i = 0; i < 4; i++) {
+  digitalWrite(MUX_PINS[i][5], HIGH);
+}
+digitalWrite(MUX_PINS[target][5], LOW);
+```
+
+### 2. Bit-Shift Channel Encoding
+
+Instead of manual if-else statements for each bit:
+
+```cpp
+// SLOW: Manual bit extraction
+if (channel & 0x01) S0 = HIGH; else S0 = LOW;
+if (channel & 0x02) S1 = HIGH; else S1 = LOW;
+if (channel & 0x04) S2 = HIGH; else S2 = LOW;
+if (channel & 0x08) S3 = HIGH; else S3 = LOW;
+
+// FAST: Loop with bit operations
+for (int i = 0; i < 4; i++) {
+  digitalWrite(MUX_PINS[mux][i], (channel >> i) & 0x01);
+}
+```
+
+**Benefits:**
+- More compact code
+- Easier to understand
+- Slightly faster execution
+
+### 3. Early Exit in Blink Update
+
+```cpp
+if (!blinkingActive) return;  // Skip entire function if not blinking
+```
+
+**Impact:**
+- Reduces loop overhead by >90% when not displaying moves
+- Allows chess calculation to use more CPU time
+
+## Troubleshooting
+
+### All LEDs on One MUX Light
+
+**Symptom:** All 16 LEDs on a multiplexer turn on together  
+**Cause:** Enable pin stuck LOW or not connected  
+**Fix:** Verify EN pin wiring and control logic
+
+### Wrong LED Lights
+
+**Symptom:** Different square than expected illuminates  
+**Cause:** Incorrect channel mapping or bit order  
+**Fix:** Verify binary encoding and MUX_PINS array
+
+### LEDs are Dim
+
+**Symptom:** LEDs light but with reduced brightness  
+**Cause:** High resistance or poor connection  
+**Fix:** Check 1kΩ resistor value and solder joints
+
+### Flickering LEDs
+
+**Symptom:** LEDs flicker when not supposed to blink  
+**Cause:** Rapid MUX switching or noise  
+**Fix:** Add small delay after channel selection (~1μs)
+
+## Testing Procedures
+
+### 1. Individual MUX Test
+
+```cpp
+void testMUX(byte mux) {
+  for (int ch = 0; ch < 16; ch++) {
+    turnOnLED(mux, ch);
+    delay(200);
+    turnOffLED(mux, ch);
+  }
+}
+```
+
+### 2. Binary Encoding Verification
+
+```cpp
+void testBinary() {
+  for (int ch = 0; ch < 16; ch++) {
+    Serial.print("Channel ");
+    Serial.print(ch);
+    Serial.print(": ");
+    Serial.println(ch, BIN);
+    setMuxChannel(0, ch);
+    delay(500);
+  }
+}
+```
+
+### 3. Startup Sequence
+
+Built into the code to test all 64 LEDs sequentially on startup.
+
+## Future Enhancements
+
+### Multi-LED Simultaneous Control
+
+Current limitation: Only 2 LEDs can be on simultaneously (source + destination).
+
+**Potential Solution:** Implement LED multiplexing with rapid switching
+- Cycle through all active LEDs very quickly (>60Hz)
+- Human eye perceives all as continuously lit
+- Allows complex board patterns
+
+### PWM Brightness Control
+
+**Current:** LEDs are either fully on or fully off  
+**Enhancement:** Use PWM for variable brightness
+- Dimmer LEDs for hints or secondary indicators
+- Brighter LEDs for active moves
+- Fade effects for smoother animations
+
+## Conclusion
+
+The multiplexer implementation successfully solves the pin limitation problem through:
+
+1. **Binary encoding:** Efficient 4-bit channel selection
+2. **Hierarchical control:** 20 pins → 4 MUXs → 64 LEDs
+3. **Non-blocking timing:** Responsive system during animations
+4. **Clear abstraction:** Hardware complexity hidden behind simple functions
+
+The system demonstrates that complex hardware control can be achieved with constrained resources through careful design and efficient programming.
+
+## See Also
+
+- [System Architecture](system-architecture.md) - Overall system design
+- [LED Mapping](led-mapping.md) - Chess square to MUX/channel translation
+- [Wiring Guide](../hardware/wiring-guide.md) - Physical connections
+- [CD74HC4067 Datasheet](https://www.ti.com/lit/ds/symlink/cd74hc4067.pdf) - Multiplexer specs
