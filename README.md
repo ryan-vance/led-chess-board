@@ -2,8 +2,8 @@
 
 An interactive 8×8 LED chess board that allows users to play against an AI opponent. The system uses Arduino Mega, multiplexers, and a Micro-Max based chess algorithm to create a physical chess experience with visual move feedback through LEDs.
 
-![LED Chess Board](images/chess_board.jpg)
-*Note: Add your chess board photo to an `images/` folder*
+![Chess Board Final Picture](https://github.com/user-attachments/assets/00ea255e-7983-44ea-82a8-ce04d6561e1e)
+
 
 ## Overview
 
