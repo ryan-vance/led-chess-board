@@ -1,0 +1,312 @@
+# Wiring Guide
+
+Complete pin connection specifications for the LED Chess Board. This guide details all connections between the Arduino Mega, multiplexers, and LEDs.
+
+## Overview
+
+The system uses **20 Arduino Mega pins** to control **4 multiplexers**, which in turn control **64 LEDs**. Each multiplexer requires 6 pins from the Arduino.
+
+### Pin Function Summary
+
+Each multiplexer connection consists of:
+- **4 Control Pins (S0-S3):** Binary channel selection (0-15)
+- **1 Signal Pin (SIG):** High/Low signal to turn LED on/off
+- **1 Enable Pin (EN):** Activates the multiplexer (active LOW)
+
+## Arduino Mega Pin Assignments
+
+### Multiplexer 0 (MUX A - Columns A-D, Rows 1-4)
+
+| Function | Arduino Pin | Description |
+|----------|------------|-------------|
+| S0 | 53 | Control bit 0 (LSB) |
+| S1 | 51 | Control bit 1 |
+| S2 | 49 | Control bit 2 |
+| S3 | 47 | Control bit 3 (MSB) |
+| SIG | 52 | Signal output to LEDs |
+| EN | 44 | Enable (active LOW) |
+
+**Controls:** Chess squares A1-A4, B1-B4, C1-C4, D1-D4
+
+### Multiplexer 1 (MUX B - Columns E-H, Rows 1-4)
+
+| Function | Arduino Pin | Description |
+|----------|------------|-------------|
+| S0 | 29 | Control bit 0 (LSB) |
+| S1 | 27 | Control bit 1 |
+| S2 | 25 | Control bit 2 |
+| S3 | 23 | Control bit 3 (MSB) |
+| SIG | 46 | Signal output to LEDs |
+| EN | 38 | Enable (active LOW) |
+
+**Controls:** Chess squares E1-E4, F1-F4, G1-G4, H1-H4
+
+### Multiplexer 2 (MUX C - Columns A-D, Rows 5-8)
+
+| Function | Arduino Pin | Description |
+|----------|------------|-------------|
+| S0 | 45 | Control bit 0 (LSB) |
+| S1 | 43 | Control bit 1 |
+| S2 | 41 | Control bit 2 |
+| S3 | 39 | Control bit 3 (MSB) |
+| SIG | 50 | Signal output to LEDs |
+| EN | 42 | Enable (active LOW) |
+
+**Controls:** Chess squares A5-A8, B5-B8, C5-C8, D5-D8
+
+### Multiplexer 3 (MUX D - Columns E-H, Rows 5-8)
+
+| Function | Arduino Pin | Description |
+|----------|------------|-------------|
+| S0 | 37 | Control bit 0 (LSB) |
+| S1 | 35 | Control bit 1 |
+| S2 | 33 | Control bit 2 |
+| S3 | 31 | Control bit 3 (MSB) |
+| SIG | 48 | Signal output to LEDs |
+| EN | 40 | Enable (active LOW) |
+
+**Controls:** Chess squares E5-E8, F5-F8, G5-G8, H5-H8
+
+## MUX Pin Array in Code
+
+```cpp
+const int MUX_PINS[][6] = {
+  {53, 51, 49, 47, 52, 44}, // MUX 0: S0, S1, S2, S3, SIG, EN
+  {29, 27, 25, 23, 46, 38}, // MUX 1: S0, S1, S2, S3, SIG, EN
+  {45, 43, 41, 39, 50, 42}, // MUX 2: S0, S1, S2, S3, SIG, EN
+  {37, 35, 33, 31, 48, 40}  // MUX 3: S0, S1, S2, S3, SIG, EN
+};
+```
+
+## Multiplexer Channel Assignments
+
+Each multiplexer controls 16 LEDs through channels 0-15, selected by the binary combination of S0-S3.
+
+### Binary Channel Selection
+
+| Channel | S3 | S2 | S1 | S0 | Binary | Decimal |
+|---------|----|----|----|----|--------|---------|
+| 0 | 0 | 0 | 0 | 0 | 0000 | 0 |
+| 1 | 0 | 0 | 0 | 1 | 0001 | 1 |
+| 2 | 0 | 0 | 1 | 0 | 0010 | 2 |
+| 3 | 0 | 0 | 1 | 1 | 0011 | 3 |
+| 4 | 0 | 1 | 0 | 0 | 0100 | 4 |
+| 5 | 0 | 1 | 0 | 1 | 0101 | 5 |
+| 6 | 0 | 1 | 1 | 0 | 0110 | 6 |
+| 7 | 0 | 1 | 1 | 1 | 0111 | 7 |
+| 8 | 1 | 0 | 0 | 0 | 1000 | 8 |
+| 9 | 1 | 0 | 0 | 1 | 1001 | 9 |
+| 10 | 1 | 0 | 1 | 0 | 1010 | 10 |
+| 11 | 1 | 0 | 1 | 1 | 1011 | 11 |
+| 12 | 1 | 1 | 0 | 0 | 1100 | 12 |
+| 13 | 1 | 1 | 0 | 1 | 1101 | 13 |
+| 14 | 1 | 1 | 1 | 0 | 1110 | 14 |
+| 15 | 1 | 1 | 1 | 1 | 1111 | 15 |
+
+### Chess Square to Channel Mapping
+
+#### Multiplexer 0 (A1-D4)
+
+| Square | MUX | Channel | Binary |
+|--------|-----|---------|--------|
+| A1 | 0 | 3 | 0011 |
+| A2 | 0 | 2 | 0010 |
+| A3 | 0 | 1 | 0001 |
+| A4 | 0 | 0 | 0000 |
+| B1 | 0 | 7 | 0111 |
+| B2 | 0 | 6 | 0110 |
+| B3 | 0 | 5 | 0101 |
+| B4 | 0 | 4 | 0100 |
+| C1 | 0 | 11 | 1011 |
+| C2 | 0 | 10 | 1010 |
+| C3 | 0 | 9 | 1001 |
+| C4 | 0 | 8 | 1000 |
+| D1 | 0 | 15 | 1111 |
+| D2 | 0 | 14 | 1110 |
+| D3 | 0 | 13 | 1101 |
+| D4 | 0 | 12 | 1100 |
+
+#### Multiplexer 1 (E1-H4)
+
+| Square | MUX | Channel | Binary |
+|--------|-----|---------|--------|
+| E1 | 1 | 3 | 0011 |
+| E2 | 1 | 2 | 0010 |
+| E3 | 1 | 1 | 0001 |
+| E4 | 1 | 0 | 0000 |
+| F1 | 1 | 7 | 0111 |
+| F2 | 1 | 6 | 0110 |
+| F3 | 1 | 5 | 0101 |
+| F4 | 1 | 4 | 0100 |
+| G1 | 1 | 11 | 1011 |
+| G2 | 1 | 10 | 1010 |
+| G3 | 1 | 9 | 1001 |
+| G4 | 1 | 8 | 1000 |
+| H1 | 1 | 15 | 1111 |
+| H2 | 1 | 14 | 1110 |
+| H3 | 1 | 13 | 1101 |
+| H4 | 1 | 12 | 1100 |
+
+#### Multiplexer 2 (A5-D8)
+
+| Square | MUX | Channel | Binary |
+|--------|-----|---------|--------|
+| A5 | 2 | 12 | 1100 |
+| A6 | 2 | 13 | 1101 |
+| A7 | 2 | 14 | 1110 |
+| A8 | 2 | 15 | 1111 |
+| B5 | 2 | 8 | 1000 |
+| B6 | 2 | 9 | 1001 |
+| B7 | 2 | 10 | 1010 |
+| B8 | 2 | 11 | 1011 |
+| C5 | 2 | 4 | 0100 |
+| C6 | 2 | 5 | 0101 |
+| C7 | 2 | 6 | 0110 |
+| C8 | 2 | 7 | 0111 |
+| D5 | 2 | 0 | 0000 |
+| D6 | 2 | 1 | 0001 |
+| D7 | 2 | 2 | 0010 |
+| D8 | 2 | 3 | 0011 |
+
+#### Multiplexer 3 (E5-H8)
+
+| Square | MUX | Channel | Binary |
+|--------|-----|---------|--------|
+| E5 | 3 | 12 | 1100 |
+| E6 | 3 | 13 | 1101 |
+| E7 | 3 | 14 | 1110 |
+| E8 | 3 | 15 | 1111 |
+| F5 | 3 | 8 | 1000 |
+| F6 | 3 | 9 | 1001 |
+| F7 | 3 | 10 | 1010 |
+| F8 | 3 | 11 | 1011 |
+| G5 | 3 | 4 | 0100 |
+| G6 | 3 | 5 | 0101 |
+| G7 | 3 | 6 | 0110 |
+| G8 | 3 | 7 | 0111 |
+| H5 | 3 | 0 | 0000 |
+| H6 | 3 | 1 | 0001 |
+| H7 | 3 | 2 | 0010 |
+| H8 | 3 | 3 | 0011 |
+
+## Physical Wiring Instructions
+
+### Step 1: Multiplexer to Arduino Connections
+
+For each multiplexer, connect the following:
+
+1. **Control Pins (S0-S3):** Connect to the Arduino pins specified above
+   - Use consistent wire colors for easy debugging
+   - Keep wires organized and avoid crossing
+
+2. **Signal Pin (SIG):** Connect to the Arduino signal pin
+   - This pin provides HIGH/LOW to turn LEDs on/off
+   - Route through the 1kΩ resistor to protect LEDs
+
+3. **Enable Pin (EN):** Connect to the Arduino enable pin
+   - Must be LOW for the MUX to be active
+   - Allows the Arduino to enable only one MUX at a time
+
+4. **Power and Ground:**
+   - VCC: Connect to Arduino 3.3V or 5V
+   - GND: Connect to Arduino GND
+   - Use a common ground for all multiplexers
+
+### Step 2: LED Connections
+
+Each LED connects to one multiplexer channel output:
+
+1. Identify the chess square position
+2. Determine MUX and channel from the mapping table above
+3. Connect LED positive to the corresponding MUX channel
+4. Connect LED negative to common ground
+
+**Example:**
+- Square E2 connects to MUX 1, Channel 2
+- Set S3=0, S2=0, S1=1, S0=0 on MUX 1
+- Set SIG pin HIGH to light the LED
+
+### Step 3: Resistor Placement
+
+- Solder one 1kΩ resistor to each multiplexer's signal pin
+- Resistor protects all 16 LEDs on that multiplexer
+- Position: Between MUX signal pin and the 16 LED channels
+
+## Testing Procedure
+
+### 1. Continuity Testing
+
+Before applying power:
+- Use a multimeter to verify all Arduino pin connections
+- Check for shorts between adjacent pins
+- Verify ground connections across all multiplexers
+
+### 2. Individual MUX Testing
+
+Test each multiplexer independently:
+
+```cpp
+// Test code for MUX 0
+digitalWrite(MUX_PINS[0][5], LOW);  // Enable MUX 0
+for (int ch = 0; ch < 16; ch++) {
+  setMuxChannel(0, ch);
+  digitalWrite(MUX_PINS[0][4], HIGH);  // Turn on LED
+  delay(500);
+  digitalWrite(MUX_PINS[0][4], LOW);   // Turn off LED
+}
+```
+
+### 3. Full System Test
+
+Use the built-in startup sequence in the Arduino code to verify all 64 squares light correctly.
+
+## Troubleshooting
+
+### Problem: All LEDs on one MUX light at once
+
+**Cause:** Enable pin not connected or stuck LOW  
+**Fix:** Verify EN pin connection and ensure it can be set HIGH to disable
+
+### Problem: Wrong square lights up
+
+**Cause:** Incorrect channel mapping  
+**Fix:** Verify the chess square to channel mapping against the table above
+
+### Problem: LED is dim
+
+**Cause:** High resistance or poor connection  
+**Fix:** Check resistor value (should be 1kΩ) and verify solder joints
+
+### Problem: No LEDs light
+
+**Cause:** Multiple possibilities
+**Fix:**
+1. Verify Arduino code is uploaded correctly
+2. Check 3.3V power supply to MUXs
+3. Verify SIG pin connections
+4. Test LED polarity
+
+## Wire Color Recommendations
+
+| Signal | Suggested Color | Purpose |
+|--------|----------------|---------|
+| S0-S3 | Blue/Green | Control signals |
+| SIG | Red | Signal to LEDs |
+| EN | Yellow | Enable control |
+| VCC | Red | Power |
+| GND | Black | Ground |
+| LED+ | Various | LED connections |
+
+## Notes
+
+- All connections assume 3.3V logic levels from Arduino Mega
+- LED polarity matters: longer lead is typically positive
+- Keep wire lengths consistent where possible for clean assembly
+- Label wires during assembly to simplify troubleshooting
+- Take photos during assembly for documentation and future reference
+
+## See Also
+
+- [System Architecture](../docs/system-architecture.md) - How software controls hardware
+- [Multiplexer Implementation](../docs/multiplexer-implementation.md) - Channel selection logic
+- [Bill of Materials](BOM.md) - Component specifications
